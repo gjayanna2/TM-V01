@@ -39,7 +39,6 @@ async def channel_post(client: Client, message: Message):
     file_folder = f'{Config.DOWNLOAD_LOCATION}/{fn}{str(random_char(5))}'
     file_path = f'{file_folder}/{file.file_name.split(".")[0]}.mp4'
     output_folder = f'{file_path}/Parts'
-    video_length = file.file_size
     try:   
         if filname in ODD.keys():
             # chtid=int(ODD[filname][3])
@@ -49,16 +48,26 @@ async def channel_post(client: Client, message: Message):
             	await client.download_media(message = message , file_name=file_path, progress=progress_for_pyrogram,progress_args=("Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....", ms, time.time()))
             except Exception as e:
             	return await ms.edit(e)
-            await ms.edit(text="DL complete")
-            SL_URL=ODD[filname][1]
-            SL_API=ODD[filname][2]
-            bot_msg = await message.reply_text("Please Wait...!", quote = True, disable_web_page_preview = True)
+            await ms.edit(text="Dᴏᴡɴʟᴏᴀᴅ complete")
             await asyncio.sleep(1)
+            if os.path.isfile(file_path):
+                await ms.edit(text=f"Starting to split {parts} parts.....!!")
+                parts = 2
+                loc,d = await split_parts(file_path, parts, file_folder)
+                for i in range(parts):
+                    await ms.delete()
+                    mg = await bot.send_message(chat_id = update.chat.id, text=f"Uploading Part{i+1} video..!")
+                    await upload(bot, update, loc + "/part" + str(i+1) + ".mp4", description = f'<b>{fn}_Part{i+1}.mp4</b>', width = 640, height = 360, d):
+                    #await bot.send_video(chat_id = update.chat.id, video = loc + "/part" + str(i+1) + ".mp4", supports_streaming = True, duration=d, width = 640, height = 360, caption = f'<b>{fn}_Part{i+1}.mp4</b>')
+                    await mg.delete()
+
+            #deleting folder aftre the splitted parts upload
+            shutil.rmtree(file_folder)
         elif media.file_name in media.file_name:
             bot_msg = await message.reply_text("Please Wait...!", quote = True)
             link = await conv_link(client , message)
             sslink= await get_short(SSLINK, SAPI, link)
-            await bot_msg.edit(f"<b>Here is your link</b>\n\n{link}\n\n<code>{link}</code>\n\nShort Link\n<code>{sslink}</code>")
+            await bot_msg.edit(f"<b>Here is your link</b>\n\n{link}\n\n<code>{link}</code>\n\nShort Link\n<code>{filname}\n{sslink}</code>")
         else:
             reply_text = await message.reply_text("❌Don't send me messages directly I'm only for serials!")
 
