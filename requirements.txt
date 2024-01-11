@@ -2,12 +2,17 @@
 pyrogram
 TgCrypto
 pyromod==1.5
+loggers
 # --- For-Database ------------ #
 pymongo
 dnspython
+motor
 # --- For-Web-Response ------- #
 aiohttp
 requests
 bs4
 pyshorteners
 pytz
+
+moviepy
+ffmpeg
