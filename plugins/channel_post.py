@@ -27,48 +27,37 @@ async def date(bot, message):
 @Bot.on_message(filters.private & filters.user(ADMINS) & ~filters.text & ~filters.command(['start','users','broadcast','batch','genlink','stats']))
 async def channel_post(client: Client, message: Message):
     current_time = datetime.now()
-    media = message.video or message.document
+    file = message.video or message.document
     # filname= media.file_name.split("S0")[0]#[1][2]etc
     ############# FOR UTSAV BOT ##################
-    #filname = re.split("S\d", media.file_name)[0]#[1][2]etc
+    filname = re.split("S\d", file.file_name)[0]#[1][2]etc
     ############# FOR DS BOT ##################
-    filname = re.split(current_time.strftime("%B"), media.file_name)[0]#[1][2]etc
+    # filname = re.split(current_time.strftime("%B"), media.file_name)[0]#[1][2]etc
     #botfsno= re.findall("S0.+E\d+\d", media.file_name)
-
-    #here we check the date is set or not
+    fn = str(file.file_name.split("_")[0])
+    file_folder = f'{Config.DOWNLOAD_LOCATION}/{fn}{str(random_char(5))}'
+    file_path = f'{file_folder}/{file.file_name.split(".")[0]}.mp4'
+    output_folder = f'{file_path}/Parts'
+    video_length = file.file_size
     try:   
-        if int(DATEDAY[-1][0:2]) % 2 != 0:#chaeking for ODD by given date
-            if filname in ODD.keys():
-                # chtid=int(ODD[filname][3])
-                pic=ODD[filname][0]
-                SL_URL=ODD[filname][1]
-                SL_API=ODD[filname][2]
-                bot_msg = await message.reply_text("Please Wait...!", quote = True, disable_web_page_preview = True)
-                await asyncio.sleep(1)
-            elif media.file_name in media.file_name:
-                bot_msg = await message.reply_text("Please Wait...!", quote = True)
-                link = await conv_link(client , message)
-                sslink= await get_short(SSLINK, SAPI, link)
-                await bot_msg.edit(f"<b>Here is your link</b>\n\n{link}\n\n<code>{link}</code>\n\nShort Link\n<code>{sslink}</code>")
-            else:
-                reply_text = await message.reply_text("❌Don't send me messages directly I'm only for serials!")
-            
-        elif int(DATEDAY[-1][0:2]) % 2 == 0:#chaeking for EVEN by given date
-            if filname in EVEN.keys():
-                # chtid=int(EVEN[filname][3])
-                pic=EVEN[filname][0]
-                SL_URL=EVEN[filname][1]
-                SL_API=EVEN[filname][2] 
-                bot_msg = await message.reply_text("Please Wait...!", quote = True, disable_web_page_preview = True)
-                await asyncio.sleep(1)
-            elif media.file_name in media.file_name:
-                bot_msg = await message.reply_text("Please Wait...!", quote = True)
-                link = await conv_link(client , message)
-                sslink= await get_short(SSLINK, SAPI, link)
-                await bot_msg.edit(f"<b>Here is your link</b>\n\n{link}\n\n<code>{link}</code>\n\nShort\n<code>{sslink}</code>")
-            else:
-                reply_text = await message.reply_text("❌Don't send me messages directly I'm only for serials!")
-            
+        if filname in ODD.keys():
+            # chtid=int(ODD[filname][3])
+            pic=ODD[filname][0]
+            ms = await message.reply_text(text=f"Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....") 
+            try:
+            	await client.download_media(message = message , file_name=file_path, progress=progress_for_pyrogram,progress_args=("Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....", ms, time.time()))
+            except Exception as e:
+            	return await ms.edit(e)
+            await ms.edit(text="DL complete")
+            SL_URL=ODD[filname][1]
+            SL_API=ODD[filname][2]
+            bot_msg = await message.reply_text("Please Wait...!", quote = True, disable_web_page_preview = True)
+            await asyncio.sleep(1)
+        elif media.file_name in media.file_name:
+            bot_msg = await message.reply_text("Please Wait...!", quote = True)
+            link = await conv_link(client , message)
+            sslink= await get_short(SSLINK, SAPI, link)
+            await bot_msg.edit(f"<b>Here is your link</b>\n\n{link}\n\n<code>{link}</code>\n\nShort Link\n<code>{sslink}</code>")
         else:
             reply_text = await message.reply_text("❌Don't send me messages directly I'm only for serials!")
 
@@ -149,3 +138,101 @@ async def new_post(client: Client, message: Message):
     except Exception as e:
         print(e)
         pass
+
+
+
+
+#generate random characters for location(path)
+def random_char(y):
+    return ''.join(random.choice(string.ascii_letters) for x in range(y))
+
+# splitting given video into equal parts
+async def split_parts(file_path, parts, file_folder):
+    video = VideoFileClip(file_path)
+    video_length = video.duration
+    duration_per_part = video_length / parts
+    d = int(duration_per_part)
+    output_folder = os.makedirs(f'{file_folder}/Parts')
+    output_folder = f'{file_folder}/Parts'
+    for i in range(parts):
+        start_time = i * duration_per_part
+        output_file = os.path.join(output_folder, f"part{i+1}.mp4")
+        cmd = f"ffmpeg -i {file_path} -ss {start_time} -t {duration_per_part} -c copy {output_file}"
+        subprocess.check_output(cmd, shell=True)
+    return output_folder,d
+
+def TimeFormatter(milliseconds: int) -> str:
+    seconds, milliseconds = divmod(int(milliseconds), 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    tmp = ((str(days) + "ᴅ, ") if days else "") + \
+        ((str(hours) + "ʜ, ") if hours else "") + \
+        ((str(minutes) + "ᴍ, ") if minutes else "") + \
+        ((str(seconds) + "ꜱ, ") if seconds else "") + \
+        ((str(milliseconds) + "ᴍꜱ, ") if milliseconds else "")
+    return tmp[:-2] 
+
+def humanbytes(size):    
+    if not size:
+        return ""
+    power = 2**10
+    n = 0
+    Dic_powerN = {0: ' ', 1: 'K', 2: 'M', 3: 'G', 4: 'T'}
+    while size > power:
+        size /= power
+        n += 1
+    return str(round(size, 2)) + " " + Dic_powerN[n] + 'ʙ'
+
+def get_readable_time(seconds: int) -> str:
+    count = 0
+    up_time = ""
+    time_list = []
+    time_suffix_list = ["s", "m", "h", "days"]
+    while count < 4:
+        count += 1
+        remainder, result = divmod(seconds, 60) if count < 3 else divmod(seconds, 24)
+        if seconds == 0 and remainder == 0:
+            break
+        time_list.append(int(result))
+        seconds = int(remainder)
+    hmm = len(time_list)
+    for x in range(hmm):
+        time_list[x] = str(time_list[x]) + time_suffix_list[x]
+    if len(time_list) == 4:
+        up_time += f"{time_list.pop()}, "
+    time_list.reverse()
+    up_time += ":".join(time_list)
+    return up_time
+
+async def progress_for_pyrogram(current, total, ud_type, message, start):
+    now = time.time()
+    diff = now - start
+    if round(diff % 5.00) == 0 or current == total:        
+        percentage = current * 100 / total
+        speed = current / diff
+        elapsed_time = round(diff) * 1000
+        time_to_completion = round((total - current) / speed) * 1000
+        estimated_total_time = elapsed_time + time_to_completion
+
+        elapsed_time = TimeFormatter(milliseconds=elapsed_time)
+        estimated_total_time = TimeFormatter(milliseconds=estimated_total_time)
+
+        progress = "{0}{1}".format(
+            ''.join(["⬢" for i in range(math.floor(percentage / 5))]),
+            ''.join(["⬡" for i in range(20 - math.floor(percentage / 5))])
+        )            
+        tmp = progress + Config.PROGRESS_BAR.format( 
+            round(percentage, 2),
+            humanbytes(current),
+            humanbytes(total),
+            humanbytes(speed),            
+            estimated_total_time if estimated_total_time != '' else "0 s"
+        )
+        try:
+            await message.edit(
+                text=f"{ud_type}\n\n{tmp}",               
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✖️ 𝙲𝙰𝙽𝙲𝙴𝙻 ✖️", callback_data="close")]])                                               
+            )
+        except:
+            pass
